@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Hanya 2 email ini boleh akses staf (huruf kecil), sama dengan config.js
+    function me() { return request.auth.token.email.lower(); }
+    function isManager() { return request.auth != null && me() == 'ichamambon@gmail.com'; }
+    function isStaff()   { return request.auth != null && (me() == 'ichamambon@gmail.com' || me() == 'helmi221008@gmail.com'); }
+    match /orders/{id} {
+      allow create: if request.resource.data.keys().hasAll(['items','total','phone','room','pay','status','ts','day'])
+                    && request.resource.data.status == 'baru';
+      allow read, update: if isStaff();
+    }
+    match /menu/{id} { allow read: if true; allow write: if isManager(); }
+  }
+}
